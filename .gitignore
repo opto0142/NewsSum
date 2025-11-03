@@ -50,6 +50,9 @@ nbdist/
 # GitHub
 .github/
 
+# Project documents
+PRD.md
+
 # Gradle
 .gradle
 build/
