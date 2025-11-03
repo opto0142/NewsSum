@@ -47,6 +47,9 @@ nbdist/
 # VS Code
 .vscode/
 
+# GitHub
+.github/
+
 # Gradle
 .gradle
 build/
