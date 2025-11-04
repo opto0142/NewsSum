@@ -30,8 +30,9 @@ public class PromoCode {
     @Indexed(unique = true)
     private String code;
 
+    @Builder.Default
     @Field("is_active")
-    private boolean active;
+    private boolean active = true;
 
     @Field("expires_at")
     private LocalDateTime expiresAt;
