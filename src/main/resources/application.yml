@@ -1,0 +1,29 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/newssum
+  security:
+    enabled: true
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:your-api-key-here}
+
+jwt:
+  secret: ${JWT_SECRET:your-jwt-secret-here}
+  expiration: 86400000  # 24시간
+
+logging:
+  level:
+    com.newssum: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
