@@ -1,6 +1,6 @@
 # NewsSum - AI 뉴스 요약 및 트렌드 분석 서비스
 
-[![Java](https://img.shields.io/badge/Java-17+-blue.svg)](https://openjdk.java.net/)
+[![Java](https://img.shields.io/badge/Java-21+-blue.svg)](https://openjdk.java.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.x-green.svg)](https://www.mongodb.com/)
 [![Gemini API](https://img.shields.io/badge/Gemini%20API-1.x-orange.svg)](https://ai.google.dev/)
@@ -28,7 +28,7 @@ NewsSum은 Spring Boot 기반의 뉴스 크롤링 및 AI 요약 서비스입니�
 ## 🛠 기술 스택
 
 ### Backend
-- **Java**: 17+
+- **Java**: 21+
 - **Framework**: Spring Boot 3.x
 - **Security**: Spring Security + JWT
 - **Database**: MongoDB (Spring Data MongoDB)
@@ -45,7 +45,7 @@ NewsSum은 Spring Boot 기반의 뉴스 크롤링 및 AI 요약 서비스입니�
 
 ## 📋 요구사항
 
-- Java 17 이상
+- Java 21 이상
 - MongoDB 7.x
 - Gradle Wrapper (동봉)
 - Google Gemini API 키
