@@ -39,7 +39,7 @@ NewsSum은 Spring Boot 기반의 뉴스 크롤링 및 AI 요약 서비스입니�
 - 순수 HTML/CSS/JavaScript (AI 생성)
 
 ### DevOps
-- **Build**: Maven
+- **Build**: Gradle (Groovy DSL)
 - **Test**: JUnit 5, Spring Boot Test
 - **CI/CD**: GitHub Actions
 
@@ -47,7 +47,7 @@ NewsSum은 Spring Boot 기반의 뉴스 크롤링 및 AI 요약 서비스입니�
 
 - Java 17 이상
 - MongoDB 7.x
-- Maven 3.6+
+- Gradle Wrapper (동봉)
 - Google Gemini API 키
 
 ## 🚀 설치 및 실행
@@ -72,11 +72,11 @@ jwt.secret=${JWT_SECRET}
 
 ### 3. 빌드 및 실행
 ```bash
-# Maven 빌드
-./mvnw clean compile
+# Gradle 빌드
+./gradlew clean build
 
 # 애플리케이션 실행
-./mvnw spring-boot:run
+./gradlew bootRun
 ```
 
 ### 4. 확인
@@ -114,13 +114,13 @@ GET  /api/admin/stats      - 시스템 통계
 
 ```bash
 # 단위 테스트 실행
-./mvnw test
+./gradlew test
 
 # 통합 테스트 실행
-./mvnw verify
+./gradlew check
 
 # 테스트 커버리지 확인
-./mvnw jacoco:report
+./gradlew jacocoTestReport
 ```
 
 ## 🏗 프로젝트 구조
