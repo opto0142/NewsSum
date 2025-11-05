@@ -62,8 +62,8 @@ target/
 
 # Spring Boot
 *.original
-application-local.properties
 application-prod.properties
+application-prod.yml
 
 # Environment variables
 .env

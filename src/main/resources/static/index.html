@@ -13,15 +13,184 @@
 </header>
 <main>
     <section>
-        <h2>Getting Started</h2>
-        <p>Prepare a valid JWT access token and Gemini API key before calling the secured endpoints.</p>
+        <h2>🔐 로그인</h2>
+        <form id="loginForm">
+            <label for="email">이메일</label>
+            <input id="email" type="email" placeholder="user@example.com" required>
+            <label for="password">비밀번호</label>
+            <input id="password" type="password" placeholder="비밀번호 (8자 이상)" required>
+            <button type="submit">로그인</button>
+            <p id="loginError" class="error"></p>
+            <p id="loginSuccess"></p>
+        </form>
+        <p style="margin-top: 16px; font-size: 14px;">
+            계정이 없으신가요? <a href="#signup" onclick="toggleSignup(event)">회원가입</a>
+        </p>
     </section>
-    <section>
-        <h2>Available Tools</h2>
-        <ul>
-            <li><a href="/news.html">News crawler and history viewer</a></li>
-        </ul>
+
+    <section id="signupSection" style="display: none;">
+        <h2>📝 회원가입</h2>
+        <form id="signupForm">
+            <label for="signupEmail">이메일</label>
+            <input id="signupEmail" type="email" placeholder="user@example.com" required>
+            <label for="signupPassword">비밀번호 (8자 이상, 숫자 포함)</label>
+            <input id="signupPassword" type="password" placeholder="비밀번호" required>
+            <label for="signupNickname">닉네임</label>
+            <input id="signupNickname" type="text" placeholder="닉네임" required>
+            <button type="submit">회원가입</button>
+            <p id="signupError" class="error"></p>
+            <p id="signupSuccess"></p>
+        </form>
+    </section>
+
+    <section id="afterLogin" style="display: none;">
+        <h2>📰 뉴스 요약 대시보드</h2>
+        <p>프리미엘 기능에 접근하려면 프로모션 코드를 입력하세요.</p>
+        <div>
+            <label for="promoCode">프로모션 코드</label>
+            <input id="promoCode" type="text" placeholder="프로모션 코드">
+            <button onclick="applyPromo()">적용</button>
+            <p id="promoError" class="error"></p>
+            <p id="promoSuccess"></p>
+        </div>
+        <hr>
+        <p><a href="/news.html">➡️ 뉴스 크롤러 및 히스토리 보기</a></p>
+        <button onclick="logout()">로그아웃</button>
     </section>
 </main>
+
+<script>
+    function toggleSignup(e) {
+        e.preventDefault();
+        document.getElementById('signupSection').style.display = 
+            document.getElementById('signupSection').style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveToken(token) {
+        localStorage.setItem('accessToken', token);
+        showAfterLogin();
+    }
+
+    function getToken() {
+        return localStorage.getItem('accessToken');
+    }
+
+    function showAfterLogin() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('signupSection').style.display = 'none';
+        document.getElementById('afterLogin').style.display = 'block';
+    }
+
+    function showBeforeLogin() {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('signupSection').style.display = 'none';
+        document.getElementById('afterLogin').style.display = 'none';
+    }
+
+    function logout() {
+        localStorage.removeItem('accessToken');
+        document.getElementById('loginError').textContent = '';
+        document.getElementById('loginSuccess').textContent = '';
+        document.getElementById('signupError').textContent = '';
+        document.getElementById('signupSuccess').textContent = '';
+        document.getElementById('promoError').textContent = '';
+        document.getElementById('promoSuccess').textContent = '';
+        showBeforeLogin();
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                document.getElementById('loginError').textContent = data.message || '로그인 실패';
+                return;
+            }
+            
+            document.getElementById('loginSuccess').textContent = '로그인 성공! ✅';
+            saveToken(data.data.accessToken);
+        } catch (err) {
+            document.getElementById('loginError').textContent = '오류: ' + err.message;
+        }
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const nickname = document.getElementById('signupNickname').value;
+        
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, nickname })
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                document.getElementById('signupError').textContent = data.message || '회원가입 실패';
+                return;
+            }
+            
+            document.getElementById('signupSuccess').textContent = '회원가입 성공! 로그인해주세요. ✅';
+            document.getElementById('signupForm').reset();
+            setTimeout(() => {
+                document.getElementById('signupSection').style.display = 'none';
+                document.getElementById('email').focus();
+            }, 2000);
+        } catch (err) {
+            document.getElementById('signupError').textContent = '오류: ' + err.message;
+        }
+    });
+
+    async function applyPromo() {
+        const token = getToken();
+        const promoCode = document.getElementById('promoCode').value;
+        
+        if (!promoCode) {
+            document.getElementById('promoError').textContent = '프로모션 코드를 입력하세요.';
+            return;
+        }
+        
+        try {
+            const res = await fetch('/api/promo/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ promoCode })
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                document.getElementById('promoError').textContent = data.message || '프로모션 코드 적용 실패';
+                return;
+            }
+            
+            document.getElementById('promoSuccess').textContent = '프로모션 코드 적용 성공! 🎉';
+            document.getElementById('promoCode').value = '';
+        } catch (err) {
+            document.getElementById('promoError').textContent = '오류: ' + err.message;
+        }
+    }
+
+    // 페이지 로드 시 토큰 확인
+    if (getToken()) {
+        showAfterLogin();
+    } else {
+        showBeforeLogin();
+    }
+</script>
 </body>
 </html>

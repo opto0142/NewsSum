@@ -66,15 +66,26 @@
     }
 
     function authHeaders() {
-        const token = document.getElementById('token').value.trim();
+        let token = document.getElementById('token').value.trim();
         if (!token) {
-            throw new Error('A JWT access token is required.');
+            token = localStorage.getItem('accessToken');
+        }
+        if (!token) {
+            throw new Error('JWT 액세스 토큰이 필요합니다. 홈페이지에서 로그인해주세요.');
         }
         return {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         };
     }
+
+    // 페이지 로드 시 localStorage에서 토큰 자동 로드
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedToken = localStorage.getItem('accessToken');
+        if (savedToken) {
+            document.getElementById('token').value = savedToken;
+        }
+    });
 
     crawlButton.addEventListener('click', async () => {
         const error = document.getElementById('crawlError');
