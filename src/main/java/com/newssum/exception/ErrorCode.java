@@ -23,6 +23,7 @@ public enum ErrorCode {
     CRAWLING_FAILED(HttpStatus.BAD_GATEWAY, "뉴스를 가져올 수 없습니다."),
     CRAWLING_NO_ARTICLE(HttpStatus.NOT_FOUND, "수집할 기사를 찾지 못했습니다."),
     GEMINI_API_FAILURE(HttpStatus.BAD_GATEWAY, "AI 요약 서비스가 응답하지 않습니다."),
+    NEWS_NOT_FOUND(HttpStatus.NOT_FOUND, "뉴스 기사를 찾을 수 없습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "예상치 못한 오류가 발생했습니다.");
 

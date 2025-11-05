@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsSum - Crawl & History</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+    <h1>NewsSum</h1>
+    <p>Trigger crawling jobs and review summarized articles.</p>
+</header>
+<main>
+    <section>
+        <h2>Authentication</h2>
+        <label for="token">Access Token (Bearer)</label>
+        <input id="token" type="password" placeholder="Paste your JWT access token here">
+        <small>Tokens never leave your browser; they are applied directly to API requests.</small>
+    </section>
+    <section>
+        <h2>Crawl News</h2>
+        <label for="sourceUrl">Source URL</label>
+        <input id="sourceUrl" type="url" placeholder="https://www.bbc.com">
+        <label for="articleCount">Article Count (1-20)</label>
+        <input id="articleCount" type="number" min="1" max="20" value="5">
+        <button id="crawlButton">Start Crawling</button>
+        <p class="error" id="crawlError"></p>
+        <p id="crawlSuccess"></p>
+    </section>
+    <section>
+        <h2>History</h2>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:180px;">
+                <label for="page">Page</label>
+                <input id="page" type="number" min="0" value="0">
+            </div>
+            <div style="flex:1; min-width:180px;">
+                <label for="size">Page Size</label>
+                <input id="size" type="number" min="1" max="20" value="5">
+            </div>
+        </div>
+        <button id="loadHistory">Load History</button>
+        <p class="error" id="historyError"></p>
+        <div id="historyContainer"></div>
+    </section>
+    <section>
+        <h2>Article Detail</h2>
+        <label for="articleId">Article ID</label>
+        <input id="articleId" type="text" placeholder="MongoDB document id">
+        <button id="loadDetail">Load Detail</button>
+        <p class="error" id="detailError"></p>
+        <div id="detailContainer"></div>
+    </section>
+</main>
+<script>
+    const crawlButton = document.getElementById('crawlButton');
+    const loadHistoryButton = document.getElementById('loadHistory');
+    const loadDetailButton = document.getElementById('loadDetail');
+
+    function escapeHtml(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function authHeaders() {
+        const token = document.getElementById('token').value.trim();
+        if (!token) {
+            throw new Error('A JWT access token is required.');
+        }
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    crawlButton.addEventListener('click', async () => {
+        const error = document.getElementById('crawlError');
+        const success = document.getElementById('crawlSuccess');
+        error.textContent = '';
+        success.textContent = '';
+        try {
+            const body = {
+                sourceUrl: document.getElementById('sourceUrl').value.trim(),
+                articleCount: Number(document.getElementById('articleCount').value)
+            };
+            const response = await fetch('/api/news/crawl', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify(body)
+            });
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.message || 'Failed to crawl news.');
+            }
+            success.textContent = `Processed ${payload.data.processedCount} articles, skipped ${payload.data.skippedCount}.`;
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
+
+    loadHistoryButton.addEventListener('click', async () => {
+        const error = document.getElementById('historyError');
+        error.textContent = '';
+        const container = document.getElementById('historyContainer');
+        container.innerHTML = '';
+        try {
+            const page = Number(document.getElementById('page').value);
+            const size = Number(document.getElementById('size').value);
+            const response = await fetch(`/api/news/history?page=${page}&size=${size}`, {
+                headers: authHeaders()
+            });
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.message || 'Failed to load history.');
+            }
+            const meta = document.createElement('p');
+            meta.textContent = `Page ${payload.data.page + 1} of ${payload.data.totalPages} (총 ${payload.data.totalElements}건)`;
+            container.appendChild(meta);
+            payload.data.items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${escapeHtml(item.translatedTitle || 'Untitled')}</h3>
+                    <p><strong>Source:</strong> ${escapeHtml(item.sourceOutlet)}</p>
+                    <p><strong>Language:</strong> ${escapeHtml(item.language)}</p>
+                    <p><strong>Published:</strong> ${escapeHtml(item.publishedAt || 'N/A')}</p>
+                    <p><strong>Summary:</strong></p>
+                    <ul class="summary-list">
+                        ${item.summary.map(point => `<li>${escapeHtml(point)}</li>`).join('')}
+                    </ul>
+                    <p><strong>ID:</strong> ${escapeHtml(item.id)}</p>
+                    <p><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Open original article</a></p>
+                `;
+                const viewButton = document.createElement('button');
+                viewButton.type = 'button';
+                viewButton.textContent = 'Load detail';
+                viewButton.addEventListener('click', () => {
+                    document.getElementById('articleId').value = item.id || '';
+                    loadDetailButton.click();
+                });
+                card.appendChild(viewButton);
+                container.appendChild(card);
+            });
+            if (payload.data.items.length === 0) {
+                container.innerHTML = '<p>No articles found for the selected page.</p>';
+            }
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
+
+    loadDetailButton.addEventListener('click', async () => {
+        const error = document.getElementById('detailError');
+        error.textContent = '';
+        const container = document.getElementById('detailContainer');
+        container.innerHTML = '';
+        try {
+            const articleId = document.getElementById('articleId').value.trim();
+            if (!articleId) {
+                throw new Error('Article ID is required.');
+            }
+            const response = await fetch(`/api/news/${articleId}`, {
+                headers: authHeaders()
+            });
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.message || 'Failed to load article detail.');
+            }
+            const article = payload.data;
+            container.innerHTML = `
+                <div class="card">
+                    <h3>${escapeHtml(article.translatedTitle || article.originalTitle)}</h3>
+                    <p><strong>Source:</strong> ${escapeHtml(article.sourceOutlet)}</p>
+                    <p><strong>Language:</strong> ${escapeHtml(article.language)}</p>
+                    <p><strong>Published:</strong> ${escapeHtml(article.publishedAt || 'N/A')}</p>
+                    <p><strong>Summary:</strong></p>
+                    <ul class="summary-list">
+                        ${article.summary.map(point => `<li>${escapeHtml(point)}</li>`).join('')}
+                    </ul>
+                    <h4>Translated Content</h4>
+                    <p>${escapeHtml(article.translatedContent || '').replace(/\n/g, '<br>')}</p>
+                    <h4>Original Content</h4>
+                    <p>${escapeHtml(article.originalContent || '').replace(/\n/g, '<br>')}</p>
+                    <p><a href="${escapeHtml(article.url)}" target="_blank" rel="noopener noreferrer">Open original article</a></p>
+                </div>
+            `;
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
+</script>
+</body>
+</html>

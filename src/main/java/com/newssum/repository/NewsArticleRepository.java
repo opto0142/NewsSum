@@ -2,6 +2,8 @@ package com.newssum.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,4 +18,8 @@ public interface NewsArticleRepository extends MongoRepository<NewsArticle, Stri
     Optional<NewsArticle> findByUrlHash(String urlHash);
 
     boolean existsByUrlHash(String urlHash);
+
+    Page<NewsArticle> findByCrawledBy(String crawledBy, Pageable pageable);
+
+    Optional<NewsArticle> findByIdAndCrawledBy(String id, String crawledBy);
 }

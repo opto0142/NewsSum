@@ -81,6 +81,7 @@ jwt.secret=${JWT_SECRET}
 
 ### 4. 확인
 브라우저에서 `http://localhost:8080` 접속
+- 뉴스 요약 대시보드: `http://localhost:8080/news.html`
 
 ## 📚 API 문서
 
@@ -99,7 +100,7 @@ POST /api/promo/validate   - 프로모션 코드 검증
 ### 뉴스 API (PREMIUM)
 ```
 POST /api/news/crawl       - 뉴스 크롤링 요청
-GET  /api/news/list        - 크롤링 결과 목록
+GET  /api/news/history     - 사용자별 크롤링 결과 목록 (페이지네이션)
 GET  /api/news/{id}        - 뉴스 상세 조회
 ```
 
