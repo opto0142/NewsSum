@@ -18,6 +18,10 @@ public enum ErrorCode {
     PROMO_CODE_INACTIVE(HttpStatus.BAD_REQUEST, "이미 사용된 프로모션 코드입니다."),
     PROMO_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "만료된 프로모션 코드입니다."),
     PROMO_CODE_DUPLICATED(HttpStatus.CONFLICT, "이미 존재하는 프로모션 코드입니다."),
+    INVALID_URL(HttpStatus.BAD_REQUEST, "올바르지 않은 URL입니다."),
+    CRAWLING_DISALLOWED(HttpStatus.FORBIDDEN, "사이트에서 크롤링이 허용되지 않습니다."),
+    CRAWLING_FAILED(HttpStatus.BAD_GATEWAY, "뉴스를 가져올 수 없습니다."),
+    CRAWLING_NO_ARTICLE(HttpStatus.NOT_FOUND, "수집할 기사를 찾지 못했습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "예상치 못한 오류가 발생했습니다.");
 
