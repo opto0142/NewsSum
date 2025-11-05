@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -22,6 +23,9 @@ import com.newssum.dto.news.CrawledArticleResponse;
 import com.newssum.dto.news.CrawlNewsResponse;
 import com.newssum.exception.CrawlingException;
 import com.newssum.exception.ErrorCode;
+import com.newssum.external.gemini.GeminiApiClient;
+import com.newssum.external.gemini.GeminiApiClient.SummaryResult;
+import com.newssum.external.gemini.GeminiApiClient.TranslationResult;
 import com.newssum.repository.NewsArticleRepository;
 
 /**
@@ -35,11 +39,14 @@ public class NewsCrawlingService {
 
     private final NewsCrawler newsCrawler;
     private final NewsArticleRepository newsArticleRepository;
+    private final GeminiApiClient geminiApiClient;
 
     public NewsCrawlingService(final NewsCrawler newsCrawler,
-        final NewsArticleRepository newsArticleRepository) {
+        final NewsArticleRepository newsArticleRepository,
+        final GeminiApiClient geminiApiClient) {
         this.newsCrawler = newsCrawler;
         this.newsArticleRepository = newsArticleRepository;
+        this.geminiApiClient = geminiApiClient;
     }
 
     public CrawlNewsResponse crawlNews(final CrawlNewsRequest request, final String requesterEmail) {
@@ -72,7 +79,7 @@ public class NewsCrawlingService {
                 skipped++;
                 continue;
             }
-            final NewsArticle saved = newsArticleRepository.save(buildNewsArticle(article, urlHash, requesterEmail));
+            final NewsArticle saved = newsArticleRepository.save(processArticle(article, urlHash, requesterEmail));
             processed++;
             responses.add(toResponse(saved, true));
         }
@@ -84,7 +91,22 @@ public class NewsCrawlingService {
             .build();
     }
 
-    private NewsArticle buildNewsArticle(final CrawledArticle article, final String urlHash, final String requesterEmail) {
+    private NewsArticle processArticle(final CrawledArticle article, final String urlHash, final String requesterEmail) {
+        final boolean needsTranslation = shouldTranslate(article.getLanguage());
+        TranslationResult translationResult = null;
+        if (needsTranslation) {
+            translationResult = geminiApiClient.translate(article.getTitle(), article.getContent());
+        }
+
+        final String summaryTitle = translationResult != null && !translationResult.translatedTitle().isBlank()
+            ? translationResult.translatedTitle()
+            : article.getTitle();
+        final String summaryContent = translationResult != null && !translationResult.translatedContent().isBlank()
+            ? translationResult.translatedContent()
+            : article.getContent();
+
+        final SummaryResult summaryResult = geminiApiClient.summarize(summaryTitle, summaryContent);
+
         return NewsArticle.builder()
             .url(article.getUrl())
             .urlHash(urlHash)
@@ -92,6 +114,9 @@ public class NewsCrawlingService {
             .originalTitle(article.getTitle())
             .originalContent(article.getContent())
             .language(article.getLanguage())
+            .translatedTitle(translationResult != null ? translationResult.translatedTitle() : summaryTitle)
+            .translatedContent(translationResult != null ? translationResult.translatedContent() : summaryContent)
+            .summary(summaryResult.summary())
             .publishedAt(article.getPublishedAt())
             .crawledBy(requesterEmail)
             .crawledAt(LocalDateTime.now())
@@ -108,6 +133,10 @@ public class NewsCrawlingService {
             .publishedAt(newsArticle.getPublishedAt())
             .newlyCreated(newlyCreated)
             .build();
+    }
+
+    private boolean shouldTranslate(final String languageCode) {
+        return languageCode == null || !Locale.KOREAN.getLanguage().equalsIgnoreCase(languageCode);
     }
 
     private String hashUrl(final String url) {
