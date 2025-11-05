@@ -16,7 +16,7 @@ gemini:
   max-output-tokens: 1000
 
 jwt:
-  secret: ${JWT_SECRET:your-jwt-secret-here}
+  secret: ${JWT_SECRET:sE5Y557iZQw+DVM6HfwynZxNcCp44ywIYY/0ctPv9nc=}
   access-token-validity: PT1H
   refresh-token-validity: P7D
 
