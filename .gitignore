@@ -62,6 +62,8 @@ target/
 
 # Spring Boot
 *.original
+application-local.properties
+application-local.yml
 application-prod.properties
 application-prod.yml
 
